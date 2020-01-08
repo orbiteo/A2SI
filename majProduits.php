@@ -40,11 +40,10 @@ if (($handle = fopen($dateOFD."_products_import.csv", "r")) !== FALSE) { // Impo
     } else {
       $nameMax128 = $link_rewriteMinuscules;
     }
-      try {
+      try { // Appel de l'API avec un id produit
         //Mise à jour des produits existants
         $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/products/'.$arrayFichesProduit[$i][0])); // On va sortir chaque fiche produit
-        $refExistingProduct = $xml->children()->children()->reference; //On récupère chaque référence
-        
+        //$refExistingProduct = $xml->children()->children()->reference; //On récupère chaque référence
         //récupération node product
         $product = $xml->children()->children();
         // Nodes obligatoires
@@ -83,14 +82,33 @@ if (($handle = fopen($dateOFD."_products_import.csv", "r")) !== FALSE) { // Impo
         $opt = array('resource' => 'products');
         $opt['putXml'] = $xml->asXML(); // Put pour modifier et id obligatoire
         $opt['id'] = (int)$arrayFichesProduit[$i][0]; //Obligatoire
-        $xml = $webService->edit($opt); //Edit     
+        $xml = $webService->edit($opt); //Edit
+        
+        //Modification des quantités associées à cet id_product
+        $xml = $webService->get($opt);
+        foreach ($xml->product->associations->stock_availables->stock_available as $stock) {
+            $xml2 = $webService->get(array('url' => PS_SHOP_PATH.'/api/stock_availables?schema=blank'));
+            $stock_availables = $xml2->children()->children();
+            $stock_availables->id = $stock->id;
+            $stock_availables->id_product  = (int)$arrayFichesProduit[$i][0];
+            $stock_availables->quantity = floatval($arrayFichesProduit[$i][13]);
+            $stock_availables->id_shop = 1;
+            $stock_availables->out_of_stock = 1;
+            $stock_availables->depends_on_stock = 0;
+            $stock_availables->id_product_attribute = $stock->id_product_attribute;
+
+            //POST des données vers la ressource 
+            $opt = array('resource' => 'stock_availables');
+            $opt['putXml'] = $xml2->asXML();
+            $opt['id'] = $stock->id ;
+            $xml2 = $webService->edit($opt);
+        }
       }
-      catch (PrestaShopWebserviceException $e) {
+      catch (PrestaShopWebserviceException $e) { // Si id produit non existant => erreur donc création
         $trace = $e->getTrace();
         //if ($trace[0]['args'][0] == 404) echo 'Bad ID';
         if ($trace[0]['args'][0] == 404) { // Sinon on le créé le produit
           try {
-            echo 'kikou';
             $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/products?schema=blank'));
             //récupération node category
             $product = $xml->children()->children();
@@ -134,6 +152,25 @@ if (($handle = fopen($dateOFD."_products_import.csv", "r")) !== FALSE) { // Impo
             $opt = array('resource' => 'products');
             $opt['postXml'] = $xml->asXML(); //post pour créer
             $xml = $webService->add($opt); //Add
+            $ps_product_id = $xml->product->id;
+
+            //Modification des quantités associées à cet id_product
+            $xml = $webService->get($opt);
+            foreach ($xml->product->associations->stock_availables->stock_available as $stock) {
+                $xml2 = $webService->get(array('url' => PS_SHOP_PATH.'/api/stock_availables?schema=blank'));
+                $stock_availables = $xml2->children()->children();
+                $stock_availables->id_product  = $ps_product_id;
+                $stock_availables->quantity = floatval($arrayFichesProduit[$i][13]);
+                $stock_availables->id_shop = 1;
+                $stock_availables->out_of_stock = 1;
+                $stock_availables->depends_on_stock = 0;
+                $stock_availables->id_product_attribute = $stock->id_product_attribute;
+
+                //POST des données vers la ressource 
+                $opt = array('resource' => 'stock_availables');
+                $opt['putXml'] = $xml2->asXML();
+                $xml2 = $webService->add($opt);
+            }
           }
           catch (PrestaShopWebserviceException $e) {
               $trace = $e->getTrace();
