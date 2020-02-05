@@ -19,11 +19,10 @@ $orderReference = "";
 $arrayQuotes = []; //Tableau recap de tous les devis
 
 $SQL = Db::getInstance()->executeS("SELECT id_quote, id_customer, products
-    FROM "._DB_PREFIX_."quotes");
+    FROM "._DB_PREFIX_."quotes 
+    WHERE `submited` = 0");
 
 $webService = new PrestaShopWebservice(PS_SHOP_PATH, PS_WS_AUTH_KEY, DEBUG);
-
-
 
 for($i=0 ; $i<count($SQL) ; $i++) { // boucle qui scale les devis
 

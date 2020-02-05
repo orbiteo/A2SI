@@ -7,8 +7,8 @@ require_once('./PSWebServiceLibrary.php');
 
 $arrayFichesProduit = [];
 // Sortir la date du jour et vérifier si un fichier de maj produit est dispo à cette date
-$dateOFD = date("d-m-Y");
-if (($handle = fopen($dateOFD."_products_import.csv", "r")) !== FALSE) { // Import du fichier .csv
+$dateOFD = date("Y-m-d");
+if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD."_201_articles.csv", "r")) !== FALSE) { // Import du fichier .csv
   while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
     if(is_numeric($data[0]) && $data[3] != "NULL") { //On vérifier que la colonne id_product soit un int
         array_push($arrayFichesProduit, $data);
@@ -43,7 +43,6 @@ if (($handle = fopen($dateOFD."_products_import.csv", "r")) !== FALSE) { // Impo
       try { // Appel de l'API avec un id produit
         //Mise à jour des produits existants
         $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/products/'.$arrayFichesProduit[$i][0])); // On va sortir chaque fiche produit
-        //$refExistingProduct = $xml->children()->children()->reference; //On récupère chaque référence
         //récupération node product
         $product = $xml->children()->children();
         // Nodes obligatoires

@@ -6,7 +6,8 @@ define('PS_WS_AUTH_KEY', '4G3WUT9M8SRJCD1Y9ZT2MICYG2XF2MXV');
 require_once('./PSWebServiceLibrary.php');
 
 /*** MISE À JOUR FICHIER CLIENTS ***/
-if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/DF_WEB_customers_import.csv', 'r')) !== FALSE) { // Import du fichier .csv
+$dateDeLUpdate = date('Y-m-d');
+if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeLUpdate.'_001_customer.csv', 'r')) !== FALSE) { // Import du fichier .csv
   while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
     $num = count($data);
     if(is_numeric($data[0])) { //On vérifier que la colonne id_client soit un int
