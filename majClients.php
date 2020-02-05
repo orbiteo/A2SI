@@ -6,39 +6,48 @@ define('PS_WS_AUTH_KEY', '4G3WUT9M8SRJCD1Y9ZT2MICYG2XF2MXV');
 require_once('./PSWebServiceLibrary.php');
 
 /*** MISE À JOUR FICHIER CLIENTS ***/
+$arrayClients = []; // array qui va récupérer toutes les infos client du fichier csv
 $dateDeLUpdate = date('Y-m-d');
 if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeLUpdate.'_001_customer.csv', 'r')) !== FALSE) { // Import du fichier .csv
   while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
-    $num = count($data);
     if(is_numeric($data[0])) { //On vérifier que la colonne id_client soit un int
+      array_push($arrayClients, $data);
+    }
+    elseif(empty($data[0])) { // En cas de nouveau client, la colonne id client et vide, on va en créé un faux
+      $SQL = Db::getInstance()->executeS("SELECT MAX(id_customer) AS idMax
+        FROM "._DB_PREFIX_."customer"); // retourne l'id le + élevé
+        $data[0] = (int)$SQL[0]["idMax"]+1; // id client
+        array_push($arrayClients, $data);
+    }
+  }
+
+  for($i=0 ; $i<count($arrayClients) ; $i++){
       // Création du link_rewrite sans accent, espace, etc...
-      $link_rewriteSansAccent = strtr($data[2], '@ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ', 'aAAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy');
-      $link_rewriteSansEspace = strtr($link_rewriteSansAccent, ' ', '-');
-      $link_rewriteSansApost = strtr($link_rewriteSansEspace, "'", '-');
-      $link_rewriteSansPoint = strtr($link_rewriteSansApost, ".", '-');
-      $link_rewriteMinuscules = strtolower($link_rewriteSansPoint);
-      $nameSansApos = strtr($link_rewriteSansAccent,  "'", '-');
-      $nameSansAposMin = strtolower($nameSansApos);
+      $adresseSansAccent = strtr($arrayClients[$i][7], '@ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ', 'aAAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy');
+      $adresseSansPointVirgule = strtr($adresseSansAccent, ';', ','); //adresse facturation
+      $adresse2SansAccent = strtr($arrayClients[$i][8], '@ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ', 'aAAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy');
+      $adresse2SansPointVirgule = strtr($adresse2SansAccent, ';', ',');
+      $adresse3SansAccent = strtr($arrayClients[$i][13], '@ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ', 'aAAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy');
+      $adresse3SansPointVirgule = strtr($adresse3SansAccent, ';', ','); // adresse livraison
+      $adresse4SansAccent = strtr($arrayClients[$i][14], '@ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ', 'aAAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy');
+      $adresse4SansPointVirgule = strtr($adresse4SansAccent, ';', ',');
 
       /*** APPEL API PRESTASHOP ***/
       $webService = new PrestaShopWebservice(PS_SHOP_PATH, PS_WS_AUTH_KEY, DEBUG);
       try {
           //Mise à jour des clients existants
-          $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers/'.$data[0]));
+          $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers/'.$arrayClients[$i][0]));
 
           //récupération node category
           $customer = $xml->children()->children();
           // Nodes obligatoires
-          $customer->id = (int)$data[0];
-          //$customer->passwd = $data[4];
-          $customer->lastname = $data[5];
-          $customer->firstname = $data[6];
-          $customer->email = $data[3];
+          $customer->id = (int)$arrayClients[$i][0];
+          $customer->lastname = $arrayClients[$i][4];
+          $customer->firstname = $arrayClients[$i][5];
+          $customer->email = $arrayClients[$i][3];
 
           // Nodes optionnels
-          $customer->active = (int)$data[1];
-          $customer->id_gender = (int)$data[2];
-          $customer->newsletter = (int)$data[7];
+          $customer->active = (int)$arrayClients[$i][1];
           $customer->id_shop_group = 1;
           $customer->id_shop = 1;
           $customer->id_default_group = 3;
@@ -47,18 +56,71 @@ if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeL
           //Envoie des données
           $opt = array('resource' => 'customers');
           $opt['putXml'] = $xml->asXML();
-          $opt['id'] = (int)$data[0]; //Obligatoire
+          $opt['id'] = (int)$arrayClients[$i][0]; //Obligatoire
           $xml = $webService->edit($opt);
+          $ps_id_customer = $xml->customer->id;
 
+          // Si colonne adresse facturation non empty:
+
+          // Modification de la table adresse // adresse de facturation
+          $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses?schema=blank'));
+          $address = $xml->children()->children();
+          // Nodes obligatoires
+          $address->id_customer = $ps_id_customer;
+          $address->id_country = 8; //france
+          $address->alias = 'Facturation'; 
+          $address->lastname = $arrayClients[$i][4];
+          $address->firstname = $arrayClients[$i][5];
+          $address->address1 = $adresseSansPointVirgule;
+          $address->city = $arrayClients[$i][10];
+          // Nodes optionnels
+          $address->address2 = $adresse2SansPointVirgule;
+          $address->postcode = $arrayClients[$i][9];
+
+          //Envoie des données
+          $opt = array('resource' => 'addresses');
+          $opt['putXml'] = $xml->asXML();
+          $opt['id'] = (int)$arrayClients[$i][6]; //Obligatoire
+          $xml = $webService->edit($opt);
       }
       catch (PrestaShopWebserviceException $e) {
           $trace = $e->getTrace();
-          if ($trace[0]['args'][0] == 404) echo 'Bad ID';
+          if ($trace[0]['args'][0] == 404){ // id client non trouvé = nouveau client, on le créé
+            try {
+              //Mise à jour des clients existants
+              $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers?schema=blank'));
+    
+              //récupération node category
+              $customer = $xml->children()->children();
+              // Nodes obligatoires
+              $customer->lastname = $arrayClients[$i][4];
+              $customer->firstname = $arrayClients[$i][5];
+              $customer->email = $arrayClients[$i][3];
+    
+              // Nodes optionnels
+              $customer->active = (int)$arrayClients[$i][1];
+              $customer->id_shop_group = 1;
+              $customer->id_shop = 1;
+              $customer->id_default_group = 3;
+              $customer->id_lang = 2;
+    
+              //Envoie des données
+              $opt = array('resource' => 'customers');
+              $opt['postXml'] = $xml->asXML();
+              $xml = $webService->add($opt);
+  
+            }
+            catch (PrestaShopWebserviceException $e) {
+                $trace = $e->getTrace();
+                if ($trace[0]['args'][0] == 404) echo 'Bad ID';
+                else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
+                else echo $e->getMessage();
+            }
+          }
           else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
           else echo $e->getMessage();
       }
       /*** / FIN APPEL API PRESTASHOP ***/
     }
   }
-}
 /*** / FIN MISE À JOUR FICHIER CLIENTS ***/
