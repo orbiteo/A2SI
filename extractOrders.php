@@ -13,6 +13,7 @@ $fhOrders = fopen($myFileOrders, 'w') or die("impossible de créer le fichier");
 //Inscrire les en-tete du fichier csv
 $enteteOrders = ["Type", "ID Client", "Ref Commande", "Nom Client", "Email CLient", "ID Adresse Facturation", "Ligne 1 Adresse Facturation", "CP Adresse Facturation", "Ville Adresse Facturation", "ID Adresse Livraison", "Ligne 1 Adresse Livraison", "CP Adresse Livraison", "Ville Adresse Livraison", "Reference Produit", "Quantite", "Prix unitaire HT", "Montant Total HT", "Fdp HT", "ID Mode de transport", "Date de commande", "Mode de paiement", "Siren"];
 fputcsv($fhOrders, $enteteOrders);
+fwrite($fhOrders, "\r\n");
 
 $orderReference = "";
 
@@ -103,6 +104,7 @@ try {
   // remplir le fichier csv avec ces données avec la méthode fputcsv()
   foreach ($arrayORDR as $fields) {
     fputcsv($fhOrders, $fields);
+    fwrite($fhOrders, "\r\n");
   }
   fclose($fhOrders);
 }
