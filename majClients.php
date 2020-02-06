@@ -61,64 +61,141 @@ if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeL
           $ps_id_customer = $xml->customer->id;
 
           // Si colonne adresse facturation non empty:
+          if(!empty($arrayClients[$i][6])) {
+            // Modification de la table adresse // adresse de facturation
+            try {
+              $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses/'.$arrayClients[$i][6]));
+              $address = $xml->children()->children();
+              // Nodes obligatoires
+              $address->id_customer = $ps_id_customer;
+              $address->id_country = 8; //france
+              $address->alias = 'Facturation'; 
+              $address->lastname = $arrayClients[$i][4];
+              $address->firstname = $arrayClients[$i][5];
+              $address->address1 = $adresseSansPointVirgule;
+              $address->city = $arrayClients[$i][10];
+              // Nodes optionnels
+              $address->address2 = $adresse2SansPointVirgule;
+              $address->postcode = $arrayClients[$i][9];
 
-          // Modification de la table adresse // adresse de facturation
-          $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses?schema=blank'));
-          $address = $xml->children()->children();
-          // Nodes obligatoires
-          $address->id_customer = $ps_id_customer;
-          $address->id_country = 8; //france
-          $address->alias = 'Facturation'; 
-          $address->lastname = $arrayClients[$i][4];
-          $address->firstname = $arrayClients[$i][5];
-          $address->address1 = $adresseSansPointVirgule;
-          $address->city = $arrayClients[$i][10];
-          // Nodes optionnels
-          $address->address2 = $adresse2SansPointVirgule;
-          $address->postcode = $arrayClients[$i][9];
+              //Envoie des données
+              $opt = array('resource' => 'addresses');
+              $opt['putXml'] = $xml->asXML();
+              $opt['id'] = (int)$arrayClients[$i][6]; //Obligatoire
+              $xml = $webService->edit($opt);
+            }
+            catch (PrestaShopWebserviceException $e) {
+              $trace = $e->getTrace();
+              if ($trace[0]['args'][0] == 404) echo 'Bad ID';
+              else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
+              else echo $e->getMessage();
+            }
+          }
+        // Si colonne adresse livraison non empty:
+        if(!empty($arrayClients[$i][12])) { 
+          // Modification de la table adresse // adresse de livraison
+          try {
+            $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses/'.$arrayClients[$i][12]));
+            $address = $xml->children()->children();
+            // Nodes obligatoires
+            $address->id_customer = $ps_id_customer;
+            $address->id_country = 8; //france
+            $address->alias = 'Livraison'; 
+            $address->lastname = $arrayClients[$i][4];
+            $address->firstname = $arrayClients[$i][5];
+            $address->address1 = $adresse3SansPointVirgule;
+            $address->city = $arrayClients[$i][10];
+            // Nodes optionnels
+            $address->address2 = $adresse4SansPointVirgule;
+            $address->postcode = $arrayClients[$i][9];
 
-          //Envoie des données
-          $opt = array('resource' => 'addresses');
-          $opt['putXml'] = $xml->asXML();
-          $opt['id'] = (int)$arrayClients[$i][6]; //Obligatoire
-          $xml = $webService->edit($opt);
+            //Envoie des données
+            $opt = array('resource' => 'addresses');
+            $opt['putXml'] = $xml->asXML();
+            $opt['id'] = (int)$arrayClients[$i][12]; //Obligatoire
+            $xml = $webService->edit($opt);
+          }
+          catch (PrestaShopWebserviceException $e) {
+            $trace = $e->getTrace();
+            if ($trace[0]['args'][0] == 404) echo 'Bad ID';
+            else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
+            else echo $e->getMessage();
+          }
+        }
       }
       catch (PrestaShopWebserviceException $e) {
           $trace = $e->getTrace();
           if ($trace[0]['args'][0] == 404){ // id client non trouvé = nouveau client, on le créé
-            try {
-              //Mise à jour des clients existants
-              $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers?schema=blank'));
+            //Création du client
+            $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers?schema=blank'));
     
-              //récupération node category
-              $customer = $xml->children()->children();
-              // Nodes obligatoires
-              $customer->lastname = $arrayClients[$i][4];
-              $customer->firstname = $arrayClients[$i][5];
-              $customer->email = $arrayClients[$i][3];
+            //récupération node category
+            $customer = $xml->children()->children();
+            // Nodes obligatoires
+            $customer->lastname = $arrayClients[$i][4];
+            $customer->firstname = $arrayClients[$i][5];
+            $customer->email = $arrayClients[$i][3];
     
-              // Nodes optionnels
-              $customer->active = (int)$arrayClients[$i][1];
-              $customer->id_shop_group = 1;
-              $customer->id_shop = 1;
-              $customer->id_default_group = 3;
-              $customer->id_lang = 2;
+            // Nodes optionnels
+            $customer->active = (int)$arrayClients[$i][1];
+            $customer->id_shop_group = 1;
+            $customer->id_shop = 1;
+            $customer->id_default_group = 3;
+            $customer->id_lang = 2;
     
               //Envoie des données
-              $opt = array('resource' => 'customers');
+            $opt = array('resource' => 'customers');
+            $opt['postXml'] = $xml->asXML();
+            $xml = $webService->add($opt);
+            $ps_id_customer = $xml->customer->id;
+
+            // Si colonne adresse facturation non empty:
+            if(!empty($arrayClients[$i][7])) {
+              // Création de l'adresse // adresse de facturation
+              $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses?schema=blank'));
+              $address = $xml->children()->children();
+              // Nodes obligatoires
+              $address->id_customer = $ps_id_customer;
+              $address->id_country = 8; //france
+              $address->alias = 'Facturation'; 
+              $address->lastname = $arrayClients[$i][4];
+              $address->firstname = $arrayClients[$i][5];
+              $address->address1 = $adresseSansPointVirgule;
+              $address->city = $arrayClients[$i][10];
+              // Nodes optionnels
+              $address->address2 = $adresse2SansPointVirgule;
+              $address->postcode = $arrayClients[$i][9];
+
+              //Envoie des données
+              $opt = array('resource' => 'addresses');
               $opt['postXml'] = $xml->asXML();
               $xml = $webService->add($opt);
-  
             }
-            catch (PrestaShopWebserviceException $e) {
-                $trace = $e->getTrace();
-                if ($trace[0]['args'][0] == 404) echo 'Bad ID';
-                else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
-                else echo $e->getMessage();
-            }
+            // Si colonne adresse livraison non empty:
+            if(!empty($arrayClients[$i][13])) { 
+            // Création de l'adresse // adresse de livraison
+            $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses?schema=blank'));
+            $address = $xml->children()->children();
+            // Nodes obligatoires
+            $address->id_customer = $ps_id_customer;
+            $address->id_country = 8; //france
+            $address->alias = 'Livraison'; 
+            $address->lastname = $arrayClients[$i][4];
+            $address->firstname = $arrayClients[$i][5];
+            $address->address1 = $adresse3SansPointVirgule;
+            $address->city = $arrayClients[$i][10];
+            // Nodes optionnels
+            $address->address2 = $adresse4SansPointVirgule;
+            $address->postcode = $arrayClients[$i][9];
+
+            //Envoie des données
+            $opt = array('resource' => 'addresses');
+            $opt['postXml'] = $xml->asXML();
+            $xml = $webService->add($opt);
           }
-          else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
-          else echo $e->getMessage();
+       }
+        else if ($trace[0]['args'][0] == 401) echo 'Bad auth key';
+        else echo $e->getMessage();
       }
       /*** / FIN APPEL API PRESTASHOP ***/
     }
