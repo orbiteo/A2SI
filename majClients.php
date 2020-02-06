@@ -37,7 +37,6 @@ if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeL
       try {
           //Mise à jour des clients existants
           $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers/'.$arrayClients[$i][0]));
-
           //récupération node category
           $customer = $xml->children()->children();
           // Nodes obligatoires
