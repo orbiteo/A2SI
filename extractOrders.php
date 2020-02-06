@@ -65,11 +65,16 @@ try {
       $cpFact = $addressFact->postcode;
       $villeFact = $addressFact->city;
 
+      $ligne1FactSansPointVirgule = strtr($ligne1Fact, ';', ',');
+
       $xml6 = $webService->get(array('url' => PS_SHOP_PATH.'/api/addresses/'.$deliveryAdress));
       $addressDeliv = $xml6->children()->children();
       $ligne1Deliv = $addressDeliv->address1;
       $cpDeliv = $addressDeliv->postcode;
       $villeDeliv = $addressDeliv->city;
+
+      $ligne1DelivSansPointVirgule = strtr($ligne1Deliv, ';', ',');
+
       try {
         $xml3 = $webService->get(array('url' => PS_SHOP_PATH.'/api/customers/'.$orderCustomerId));
         $customerDetail = $xml3->children()->children();
@@ -91,7 +96,7 @@ try {
       }
         
       //}
-      $arrayEnteteOrder = array("T", $idCustomerDetail, $orderReference, $orderCustomerName, $customerEmail, $invoiceAddress, $ligne1Fact, $cpFact, $villeFact, $deliveryAdress, $ligne1Deliv, $cpDeliv, $villeDeliv, "", "", "", $orderTotalPaid, $totalShipping, $idTransp, $orderDate, $payment, $customerSiret);
+      $arrayEnteteOrder = array("T", $idCustomerDetail, $orderReference, $orderCustomerName, $customerEmail, $invoiceAddress, $ligne1FactSansPointVirgule, $cpFact, $villeFact, $deliveryAdress, $ligne1DelivSansPointVirgule, $cpDeliv, $villeDeliv, "", "", "", $orderTotalPaid, $totalShipping, $idTransp, $orderDate, $payment, $customerSiret);
       array_push($arrayORDR, $arrayEnteteOrder); // ajouter chaque tableau client au tableau général
     }
   }
