@@ -13,6 +13,12 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
     if(is_numeric($data[0]) && $data[3] != "NULL") { //On vérifier que la colonne id_product soit un int
         array_push($arrayFichesProduit, $data);
     }
+    elseif(empty($data[0])) {
+      $SQL = Db::getInstance()->executeS("SELECT MAX(id_product) AS idMax
+        FROM "._DB_PREFIX_."product"); // retourne l'id le + élevé
+        $data[0] = (int)$SQL[0]["idMax"]+1; // fake id_combination créé 
+        array_push($arrayFichesProduit, $data);
+    }
   }
   /*** APPEL API PRESTASHOP ***/
   $webService = new PrestaShopWebservice(PS_SHOP_PATH, PS_WS_AUTH_KEY, DEBUG);
@@ -105,7 +111,6 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
       }
       catch (PrestaShopWebserviceException $e) { // Si id produit non existant => erreur donc création
         $trace = $e->getTrace();
-        //if ($trace[0]['args'][0] == 404) echo 'Bad ID';
         if ($trace[0]['args'][0] == 404) { // Sinon on le créé le produit
           try {
             $xml = $webService->get(array('url' => PS_SHOP_PATH.'/api/products?schema=blank'));
@@ -167,7 +172,7 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
 
                 //POST des données vers la ressource 
                 $opt = array('resource' => 'stock_availables');
-                $opt['putXml'] = $xml2->asXML();
+                $opt['postXml'] = $xml2->asXML();
                 $xml2 = $webService->add($opt);
             }
           }
