@@ -51,6 +51,8 @@ if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeL
           $customer->id_shop = 1;
           $customer->id_default_group = 3;
           $customer->id_lang = 2;
+          $customer->company = $arrayClients[$i][18];
+          $customer->code_sap = $arrayClients[$i][19];
 
           //Envoie des données
           $opt = array('resource' => 'customers');
@@ -141,6 +143,8 @@ if (($handle = fopen(_PS_MODULE_DIR_.'/interfaceerp/imports/customers/'.$dateDeL
             $customer->id_shop = 1;
             $customer->id_default_group = 3;
             $customer->id_lang = 2;
+            $customer->company = $arrayClients[$i][18];
+            $customer->code_sap = $arrayClients[$i][19];
     
               //Envoie des données
             $opt = array('resource' => 'customers');

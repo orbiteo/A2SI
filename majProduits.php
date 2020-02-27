@@ -29,7 +29,7 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
     'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
     'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
     'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
-    $link_rewriteSansAccent = strtr($arrayFichesProduit[$i][2], $unwanted_array);
+    $link_rewriteSansAccent = strtr($arrayFichesProduit[$i][5], $unwanted_array);
     $link_rewriteSansEspace = strtr($link_rewriteSansAccent, ' ', '-');
     $link_rewriteSansApost = strtr($link_rewriteSansEspace, "'", '-');
     $link_rewriteSansPoint = strtr($link_rewriteSansApost, ".", '-');
@@ -53,13 +53,13 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
         $product = $xml->children()->children();
         // Nodes obligatoires
         $product->id = (int)$arrayFichesProduit[$i][0];
-        $product->price = floatval($arrayFichesProduit[$i][4]);
+        $product->price = floatval($arrayFichesProduit[$i][15]);
         $product->link_rewrite->language[0][0] = $nameMax128;
         unset($xml->children()->children()->manufacturer_name);
         unset($xml->children()->children()->quantity);
         // Nodes optionnels:                     
         // Catégories associées au produit
-        $arrayCategories = explode(",", $arrayFichesProduit[$i][19]);
+        $arrayCategories = explode(",", $arrayFichesProduit[$i][4]);
         foreach($arrayCategories as $cat) {
           //$product->associations->categories->category['xlink:href'] = PS_SHOP_PATH . '/api/categories/'. intval($cat);
           $product->associations->categories->category->id = intval($cat);
@@ -73,15 +73,16 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
         $product->id_manufacturer = $data[9];
         $product->id_manufacturer[0][0]['xlink:href'] = PS_SHOP_PATH . '/api/manufacturers/' . (int)$data[9];*/
 
-        $product->width = floatval($arrayFichesProduit[$i][2]);
+        $product->width = floatval($arrayFichesProduit[$i][9]);
         $product->height = floatval($arrayFichesProduit[$i][10]);
         $product->depth = floatval($arrayFichesProduit[$i][11]);
         $product->weight = floatval($arrayFichesProduit[$i][12]);
-        $product->minimal_quantity = $arrayFichesProduit[$i][14];
-        $product->name->language[0][0] = $arrayFichesProduit[$i][2];
-        $product->description_short->language[0][0] = $arrayFichesProduit[$i][15];
-        $product->description->language[0][0] = $arrayFichesProduit[$i][16];
-        $product->available_for_order = $arrayFichesProduit[$i][17];
+        $product->name->language[0][0] = $arrayFichesProduit[$i][3];
+        $product->description_short->language[0][0] = $arrayFichesProduit[$i][17];
+        $product->description->language[0][0] = $arrayFichesProduit[$i][18];
+        $product->available_for_order = $arrayFichesProduit[$i][2];
+        $product->code_sap = $arrayFichesProduit[$i][20];
+
 
         //Envoi des données
         $opt = array('resource' => 'products');
@@ -96,7 +97,7 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
             $stock_availables = $xml2->children()->children();
             $stock_availables->id = $stock->id;
             $stock_availables->id_product  = (int)$arrayFichesProduit[$i][0];
-            $stock_availables->quantity = floatval($arrayFichesProduit[$i][13]);
+            $stock_availables->quantity = floatval($arrayFichesProduit[$i][14]);
             $stock_availables->id_shop = 1;
             $stock_availables->out_of_stock = 1;
             $stock_availables->depends_on_stock = 0;
@@ -117,7 +118,7 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
             //récupération node category
             $product = $xml->children()->children();
             // Nodes obligatoires
-            $product->price = floatval($arrayFichesProduit[$i][4]);
+            $product->price = floatval($arrayFichesProduit[$i][15]);
             $product->name->language[0][0] = $link_rewriteSansAccent;
             $product->link_rewrite->language[0][0] = $link_rewriteMinuscules;
             $product->link_rewrite->language[0][0]['id'] = 2;
@@ -125,7 +126,7 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
 
             // Nodes optionnels :
             // Catégories associées au produit
-            $arrayCategories = explode(",", $arrayFichesProduit[$i][19]);
+            $arrayCategories = explode(",", $arrayFichesProduit[$i][4]);
             foreach($arrayCategories as $cat) {
               $product->associations->categories->category[0][0]['xlink:href'] = PS_SHOP_PATH . '/api/categories/'. intval($cat);
               $product->associations->categories->category->id = intval($cat);
@@ -143,14 +144,14 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
             $product->height = floatval($arrayFichesProduit[$i][10]);
             $product->depth = floatval($arrayFichesProduit[$i][11]);
             $product->weight = floatval($arrayFichesProduit[$i][12]);
-            $product->minimal_quantity = $arrayFichesProduit[$i][14];
-            $product->description_short->language[0][0] = $arrayFichesProduit[$i][15];
+            $product->description_short->language[0][0] = $arrayFichesProduit[$i][17];
             $product->description_short->language[0][0]['id'] = 2;
             $product->description_short->language[0][0]['xlink:href'] = PS_SHOP_PATH . '/api/languages/' . 2;
-            $product->description->language[0][0] = $arrayFichesProduit[$i][16];
+            $product->description->language[0][0] = $arrayFichesProduit[$i][18];
             $product->description->language[0][0]['id'] = 2;
             $product->description->language[0][0]['xlink:href'] = PS_SHOP_PATH . '/api/languages/' . 2;
-            $product->available_for_order = $arrayFichesProduit[$i][17];
+            $product->available_for_order = $arrayFichesProduit[$i][2];
+            $product->code_sap = $arrayFichesProduit[$i][20];
 
             //Envoie des données
             $opt = array('resource' => 'products');
@@ -164,7 +165,7 @@ if (($handle = fopen(_PS_MODULE_DIR_."/interfaceerp/imports/products/".$dateOFD.
                 $xml2 = $webService->get(array('url' => PS_SHOP_PATH.'/api/stock_availables?schema=blank'));
                 $stock_availables = $xml2->children()->children();
                 $stock_availables->id_product  = $ps_product_id;
-                $stock_availables->quantity = floatval($arrayFichesProduit[$i][13]);
+                $stock_availables->quantity = floatval($arrayFichesProduit[$i][14]);
                 $stock_availables->id_shop = 1;
                 $stock_availables->out_of_stock = 1;
                 $stock_availables->depends_on_stock = 0;

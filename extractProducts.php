@@ -12,12 +12,11 @@ $dateDeLUpdate = date('Y-m-d');
 $myFile = _PS_MODULE_DIR_.'/interfaceerp/exports/produits/produits'.$dateDeLUpdate.'.csv';
 $fh = fopen($myFile, 'w') or die("impossible de créer le fichier");
 //Inscrire les en-tete du fichier csv
-$entete = ["Product ID", "Active", "Name", "Price", "Reference", "Supplier reference", "Supplier id", "Manufacturer id", "Width", "Height", "Depth", "Weigth", "Quantity", "Minimal quantity", "Short description", "Description", "Available for order"];
+$entete = ["Product ID", "Reference article"];
 fputcsv($fh, $entete);
 
 $arrayDetailsAllProducts = []; //Tableau recap de toutes les commandes
 
-//sortir le xml products
 $webService = new PrestaShopWebservice(PS_SHOP_PATH, PS_WS_AUTH_KEY, DEBUG);
 try {
   $xml = $webService->get(array('resource' => 'products'));
@@ -30,24 +29,8 @@ try {
     $productDetails = $xml->children()->children();
     // extraire les données dans des variables puis dans un tableau par id, puis dans un tableau de tous les id
     $productId = $productDetails->id;
-    $productActive = $productDetails->active;
-    $productName = $productDetails->name->language[0][0];
-    //$productCategories = $productDetails->active; // faire un boucle pour sortir tous les id de categorie
-    $productPrice = $productDetails->price;
     $productReference = $productDetails->reference;
-    $productSupplierRefence = $productDetails->supplier_reference;
-    $productIdSupplier = $productDetails->id_supplier;
-    $productIdManufacturer = $productDetails->id_manufacturer;
-    $productWidth = $productDetails->width;
-    $productHeight = $productDetails->height;
-    $productDepth = $productDetails->depth;
-    $productWeight = $productDetails->weight;
-    $productQuantity = $productDetails->quantity;
-    $productMinimalQuantity = $productDetails->minimal_quantity;
-    $productDescriptionShort = $productDetails->description_short->language[0][0];
-    $productDescription = $productDetails->description->language[0][0];
-    $productAvailableForOrder = $productDetails->available_for_order;
-    $arrayDetailsProduct = array($productId, $productActive, $productName, $productPrice, $productReference, $productSupplierRefence, $productIdSupplier, $productIdManufacturer, $productWidth, $productHeight, $productDepth, $productWeight, $productQuantity, $productMinimalQuantity, $productDescriptionShort, $productDescription, $productAvailableForOrder); // id, active, name, categories, price, reference, supplier reference, supplier, manufacturer, width, height, depth, weight, quantity, minimal quantity, short description, description, available for order
+    $arrayDetailsProduct = array($productId, $productReference); 
     array_push($arrayDetailsAllProducts, $arrayDetailsProduct); // ajouter chaque tableau client au tableau général
   }
   // remplir le fichier csv avec ces données avec la méthode fputcsv()
